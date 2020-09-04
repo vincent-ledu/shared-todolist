@@ -7,10 +7,11 @@ const io = require("socket.io").listen(server);
 const fs = require("fs");
 const ntlm = require("express-ntlm");
 const dotenv = require("dotenv");
+const { pathToFileURL } = require("url");
 
 const tasksFile = "./todo.txt";
 
-var todolist = []; // Créer le tableau todolist pour stocker les tâches sur le serveur
+var todolists = {}; // Créer le tableau todolist pour stocker les tâches sur le serveur
 
 dotenv.config();
 const DOMAIN = process.env.DOMAIN;
@@ -19,7 +20,7 @@ const USE_AD = JSON.parse(process.env.USE_AD);
 
 function init() {
   if (USE_AD) {
-    console.log(`usead: ${USE_AD}`)
+    console.log(`usead: ${USE_AD}`);
     const ntlmRetry = (req, res, next) => {
       console.log("Sending 503 following NTLM auth error. NTLM: " + req.ntlm);
       res.status(503);
@@ -40,19 +41,20 @@ init();
 app
   .use(express.static("public")) // Gestion des fichiers statiques
 
-  .get("/todolist", function (request, response) {
+  .get("/todolist/:id", function (request, response) {
     var user = "(?)";
     if (USE_AD && request.ntlm) {
       user = request.ntlm.UserName;
       console.log(`User ${user} connected`);
     }
-    response.render("todo.ejs", { user: user });
+    const id = request.params.id;
+    response.render("todo.ejs", { user: user, todolistId: id });
     //response.sendFile(__dirname + '/views/todo.html');
   })
 
   // On redirige vers la todolist si la page demandée n'est pas trouvée
   .use(function (request, response, next) {
-    response.redirect("/todolist");
+    response.redirect("/todolist/common");
   });
 
 function saveTask(tasks) {
@@ -67,8 +69,14 @@ function saveTask(tasks) {
 function readTasks() {
   if (fs.existsSync(tasksFile)) {
     console.log(`File ${tasksFile} exists.`);
-    todolist = JSON.parse(fs.readFileSync(tasksFile));
-    console.log(`It contains: ${JSON.stringify(todolist)}`);
+    let fileContent = fs.readFileSync(tasksFile);
+    console.log(`filecontent: ${fileContent}`);
+    if (fileContent === undefined || fileContent === "") {
+      todolists = {};
+    } else {
+      todolists = JSON.parse(fileContent);
+    }
+    console.log(`It contains: ${JSON.stringify(todolists)}`);
   } else {
     console.log(`File ${tasksFile} doesn't exists.`);
   }
@@ -76,40 +84,41 @@ function readTasks() {
 
 // L'événement
 io.on("connection", function (socket) {
-  /**
-   * Déconnexion d'un utilisateur
-   */
-  socket.on("disconnect", function () {
-    console.log("user disconnected : ");
-  });
-
+  console.log("user connected");
   // Envoyer l'événement  updateTask à tous les utilisateurs e
-  socket.emit("updateTask", todolist);
+  socket.emit("updateTask", todolists);
 
   /**
    * Réception de l'événement 'addTask' et réémission vers tous les utilisateurs
    */
-  socket.on("addTask", function (task, user) {
+  socket.on("addTask", function (task, user, todolistId) {
     task = ent.encode(task);
     console.log(`user: ${user}`);
 
     user = ent.encode(user);
-    todolist.push(`${task} from: ${user}`); // Ajouter une tâche au tableau todolist du serveur
-    saveTask(todolist);
+    if (todolists[todolistId] === undefined) {
+      todolists[todolistId] = [];
+    }
+    todolists[todolistId].push(`${user}: ${task}`); // Ajouter une tâche au tableau todolist du serveur
+    saveTask(todolists);
 
     // Envoyer une tâche à tous les utilisateurs en temps réel
-    socket.broadcast.emit("updateTask", todolist);
-    console.log(todolist); // Debug
+    console.log('emit test')
+    socket.broadcast.emit("test")
+    console.log(`Broadcast to updateTask${todolistId}`);
+    socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
+    
+    console.log(todolists); // Debug
   });
 
   // Delete tasks
-  socket.on("deleteTask", function (index) {
+  socket.on("deleteTask", function (index, todolistId) {
     // Supprime une tâche du tableau todolist du serveur
-    todolist.splice(index, 1);
-    saveTask(todolist);
+    todolists[todolistId].splice(index, 1);
+    saveTask(todolists);
 
     //Mises à jour todolist de tous les utilisateurs en temps réel - rafraîchir l'index
-    io.emit("updateTask", todolist);
+    io.emit("updateTask", todolists);
   });
 });
 
