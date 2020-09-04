@@ -3,7 +3,7 @@ module.exports = {
     {
       script: "app.js",
       watch: ".",
-      ignore_watch : ["node_modules", "todo.txt"]
+      ignore_watch : ["node_modules", "todo.txt", ".git"]
     }    
   ],
 };
