@@ -15,10 +15,16 @@ var todolist = []; // Créer le tableau todolist pour stocker les tâches sur le
 dotenv.config();
 const DOMAIN = process.env.DOMAIN;
 const DOMAIN_CONTROLLER = process.env.DOMAIN_CONTROLLER;
-const USE_AD = process.env.USE_AD;
+const USE_AD = JSON.parse(process.env.USE_AD);
 
 function init() {
   if (USE_AD) {
+    console.log(`usead: ${USE_AD}`)
+    const ntlmRetry = (req, res, next) => {
+      console.log("Sending 503 following NTLM auth error. NTLM: " + req.ntlm);
+      res.status(503);
+      next();
+    };
     app.use(
       ntlm({
         domain: DOMAIN,
@@ -30,12 +36,6 @@ function init() {
   }
 }
 init();
-
-const ntlmRetry = (req, res, next) => {
-  console.log("Sending 503 following NTLM auth error. NTLM: " + req.ntlm);
-  res.status(503);
-  next();
-};
 
 app
   .use(express.static("public")) // Gestion des fichiers statiques
