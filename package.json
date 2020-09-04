@@ -8,6 +8,7 @@
         "express": "^4.17.0",
         "express-ntlm": "^2.5.2",
         "fs": "0.0.1-security",
+        "pm2": "^4.4.1",
         "socket.io": "^2.1.1"
     },
     "author": "Vincent Le Dû",
