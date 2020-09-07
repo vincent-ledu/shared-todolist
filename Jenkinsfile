@@ -7,7 +7,6 @@ node('nodejs12') {
     
     stage('Building') {
         sh label: 'Installing deps', script: 'npm ci --no-progress'
-        sh label: 'Building', script: 'npm run build --no-progress'
     }
 
     stage('Tarring tarball') {
