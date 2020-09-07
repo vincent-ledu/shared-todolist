@@ -2,7 +2,7 @@ def archive_file = "shared-todolist.tgz"
 
 node('nodejs12') {
   stage('clean workspace') {
-    sh script: 'rm -rf .'
+    sh script: 'rm -rf *'
   }
   stage('pulling code') {
     checkout scm
