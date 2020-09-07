@@ -13,10 +13,6 @@ node('nodejs12') {
   }
 
   stage('Tarring tarball') {
-    sh script: "echo ${WORKSPACE}"
-    sh script: "echo ${JENKINS_HOME}"
-    sh script: "echo "
-    
     sh label: 'Making tarball', script: "cd .. && tar --exclude='.env.sample' -cvzf ${archive_file} ${JOB_BASE_NAME} && mv ${archive_file} ${JOB_BASE_NAME}"
   }
   stage('Archiving') {
