@@ -51,9 +51,19 @@ app
     response.render("todo.ejs", { user: user, todolistId: id });
     //response.sendFile(__dirname + '/views/todo.html');
   })
+  .post("/todolist/:id", function(request, response) {
+    var user = "(?)";
+    if (USE_AD && request.ntlm) {
+      user = request.ntlm.UserName;
+      console.log(`User ${user} connected`);
+    }
+    const id = request.params.id;
+    response.render("todo.ejs", { user: user, todolistId: id });
+  })
 
   // On redirige vers la todolist si la page demandée n'est pas trouvée
-  .use(function (request, response, next) {
+  .use("/", function (request, response, next) {
+    console.log(`request: ${request.url}`)
     response.redirect("/todolist/common");
   });
 
@@ -70,8 +80,9 @@ function readTasks() {
   if (fs.existsSync(tasksFile)) {
     console.log(`File ${tasksFile} exists.`);
     let fileContent = fs.readFileSync(tasksFile);
-    console.log(`filecontent: ${fileContent}`);
-    if (fileContent === undefined || fileContent === "") {
+    console.log(`typeof :  ${typeof fileContent}`)
+    console.log(`filecontent: |${fileContent}|`);
+    if (fileContent || !str || /^\s*$/.test(fileContent)) {
       todolists = {};
     } else {
       todolists = JSON.parse(fileContent);
@@ -86,15 +97,14 @@ function readTasks() {
 io.on("connection", function (socket) {
   console.log("user connected");
   // Envoyer l'événement  updateTask à tous les utilisateurs e
-  socket.emit("updateTask", todolists);
+  //socket.emit("updateTask", todolists);
 
   /**
    * Réception de l'événement 'addTask' et réémission vers tous les utilisateurs
    */
   socket.on("addTask", function (task, user, todolistId) {
+    console.log(`addTask: ${task} - ${user} - ${todolistId}`)
     task = ent.encode(task);
-    console.log(`user: ${user}`);
-
     user = ent.encode(user);
     if (todolists[todolistId] === undefined) {
       todolists[todolistId] = [];
@@ -103,12 +113,16 @@ io.on("connection", function (socket) {
     saveTask(todolists);
 
     // Envoyer une tâche à tous les utilisateurs en temps réel
-    console.log('emit test')
-    socket.broadcast.emit("test")
     console.log(`Broadcast to updateTask${todolistId}`);
     socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
     
     console.log(todolists); // Debug
+  });
+
+  socket.on("firstConnection", function(todolistId) {
+    console.log("firstConnection")
+    socket.emit(`updateTask${todolistId}`, todolists[todolistId]);
+    socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
   });
 
   // Delete tasks
@@ -118,7 +132,7 @@ io.on("connection", function (socket) {
     saveTask(todolists);
 
     //Mises à jour todolist de tous les utilisateurs en temps réel - rafraîchir l'index
-    io.emit("updateTask", todolists);
+    socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
   });
 });
 
