@@ -1,12 +1,27 @@
- Un simple code d'application Todolist en temps réel avec Node.js, Express.js et socket.io
- cette application est Inspiré par : le chapitre : <a href="https://openclassrooms.com/courses/des-applications-ultra-rapides-avec-node-js"> Des applications ultra-rapides avec Node.js </a> dans  Openclassrooms
-  
-  Installation les dépendances : 
-  
-  npm install 
-  
-  Démarrer l'application : 
-  
-  node app.js 
-  
-  L'application est désormais accesssible à l'url http://localhost:8080/
+# Description
+
+Simple TodoList application, you will find in lot of tutorial.
+
+Enhancement:
+- Shared todolist between user
+- Authentication based on NTLM
+- Multiple todolists
+
+
+# Run the app
+
+## Node
+
+```
+git clone git@github.com:vincent-ledu/shared-todolist.git
+npm install
+npm run start
+```
+
+## Docker
+
+```
+git clone git@github.com:vincent-ledu/shared-todolist.git
+docker build -t sharedtodolist .
+docker run -p 8888:8080 sharedtodolist
+```
