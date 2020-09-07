@@ -10,7 +10,7 @@ node('nodejs12') {
     }
 
     stage('Tarring tarball') {
-        sh label: 'Making tarball', script: "tar --exclude='.env.sample' cvzf ${archive_file} ."
+        sh label: 'Making tarball', script: "cd .. && tar --exclude='.env.sample' -cvzf ${archive_file} SharedTodolist"
     }
     stage('Archiving') {
         archiveArtifacts artifacts: "${archive_file}", defaultExcludes: false, followSymlinks: false, onlyIfSuccessful: true
