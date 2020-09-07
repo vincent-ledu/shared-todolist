@@ -13,7 +13,7 @@ node('nodejs12') {
   }
 
   stage('Tarring tarball') {
-    sh script: "echo ${WORSPACE}"
+    sh script: "echo ${WORKSPACE}"
     sh script: "echo ${JENKINS_HOME}"
     sh script: "echo ${JOB_BASE_NAME}"
     
