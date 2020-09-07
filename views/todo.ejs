@@ -25,11 +25,12 @@
             <ul id="todolist"></ul>
 
             <!-- The form to add task -->
-            <form action="/" method="post" id="todolistForm">
+            <form id="todolistForm" method="post" action="/todolist/<%= todolistId %>">
                 <label for="task">Nouveau sujet :</label>
                 <input type="text" name="task" id="task" autofocus required>
                 <input type="hidden" id="user" name="user" value="<%= user %>" >
-                <input type="submit" class="btn btn-primary" value="Envoyer">
+                <input type="hidden" id="todolistId" name="todolistId" value="<%= todolistId %>" >
+                <button type="submit" class="btn btn-primary" value="Envoyer">
             </form>
         </div>
     </div>
@@ -38,6 +39,56 @@
 
 <script src="http://code.jquery.com/jquery-1.11.1.js"></script>
 <script src="/socket.io/socket.io.js"></script>
-<script src="client.js"></script>
+<script>
+// Connexion à socket.io
+
+const socket = io();
+
+
+
+const todolistId = document.getElementById("todolistId").value;
+
+console.log("firstConnection")
+socket.emit("firstConnection", todolistId);
+
+console.log("todolistid: " + todolistId);
+// Lors de la première connexion, récupère toutes les tâches
+console.log("listenSocket on updateTask" + todolistId);
+socket.on("updateTask" + todolistId, function (todolist) {
+  console.log(`received msg on updateTask${todolistId} with list: ${todolist}`);
+  $("#todolist").empty(); // Refresh the list
+  if (todolist) {
+    todolist.forEach(function (task, index) {
+      insertTask(task, index);
+    });
+  }
+});
+
+//
+$("#todolistForm").submit(function (e) {
+  //e.preventDefault();
+  var task = $("#task").val();
+  var user = $("#user").val();
+  console.log("user: " + user);
+  socket.emit("addTask", task, user, todolistId);
+  $("#task").val("").focus();
+});
+
+function insertTask(task, index) {
+  $("#todolist").append(
+    '<li><a class="delete" href="#" data-index="' +
+      index +
+      '">✘</a> ' +
+      task +
+      "</li>"
+  );
+}
+
+// supprime une tâche
+$("body").on("click", ".delete", function () {
+  socket.emit("deleteTask", $(this).data("index"), todolistId);
+});
+
+</script>
 </body>
 </html>
