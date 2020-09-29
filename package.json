@@ -2,7 +2,7 @@
     "name": "Shared-todolist",
     "version": "0.1.0",
     "scripts": {
-      "start": "node app.js"
+        "start": "node app.js"
     },
     "dependencies": {
         "dotenv": "^8.2.0",
