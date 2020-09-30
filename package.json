@@ -4,7 +4,7 @@
     "scripts": {
         "start": "node app.js",
         "dockerbuild": "docker build --tag shared-list .",
-        "dockerstart": "docker run shared-list" 
+        "dockerstart": "docker run -p8080:8080 shared-list" 
     },
     "dependencies": {
         "dotenv": "^8.2.0",

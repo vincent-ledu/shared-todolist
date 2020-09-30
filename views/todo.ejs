@@ -55,6 +55,7 @@ console.log("todolistid: " + todolistId);
 // Lors de la première connexion, récupère toutes les tâches
 console.log("listenSocket on updateTask" + todolistId);
 socket.on("updateTask" + todolistId, function (todolist) {
+  console.log("receive updatetask")
   $("#todolist").empty(); // Refresh the list
   if (todolist) {
     todolist.forEach(function (task, index) {
@@ -85,7 +86,8 @@ function insertTask(task, index) {
 
 // supprime une tâche
 $("body").on("click", ".delete", function () {
-  socket.emit("deleteTask", $(this).data("index"), todolistId);
+  console.log($(this).parent().text().replace('✘ ', ''))
+  socket.emit("deleteTask", $(this).parent().text().replace('✘ ', ''), todolistId);
 });
 
 </script>

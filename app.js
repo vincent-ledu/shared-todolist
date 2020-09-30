@@ -9,14 +9,15 @@ const ntlm = require("express-ntlm");
 const dotenv = require("dotenv");
 const { pathToFileURL } = require("url");
 
-const tasksFile = "./todo.txt";
-
 var todolists = {}; // Créer le tableau todolist pour stocker les tâches sur le serveur
 
 dotenv.config();
 const DOMAIN = process.env.DOMAIN;
 const DOMAIN_CONTROLLER = process.env.DOMAIN_CONTROLLER;
 const USE_AD = JSON.parse(process.env.USE_AD);
+const DATA_DIR = process.env.DATA_DIR || "."
+
+const tasksFile = DATA_DIR + "/todo.txt";
 
 function init() {
   if (USE_AD) {
@@ -51,7 +52,7 @@ app
     response.render("todo.ejs", { user: user, todolistId: id });
     //response.sendFile(__dirname + '/views/todo.html');
   })
-  .post("/todolist/:id", function(request, response) {
+  .post("/todolist/:id", function (request, response) {
     var user = "(?)";
     if (USE_AD && request.ntlm) {
       user = request.ntlm.UserName;
@@ -115,23 +116,31 @@ io.on("connection", function (socket) {
     // Envoyer une tâche à tous les utilisateurs en temps réel
     console.log(`Broadcast to updateTask${todolistId}`);
     socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
-    
+
     console.log(todolists); // Debug
   });
 
-  socket.on("firstConnection", function(todolistId) {
+  socket.on("firstConnection", function (todolistId) {
     console.log("firstConnection")
     socket.emit(`updateTask${todolistId}`, todolists[todolistId]);
     socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
   });
 
   // Delete tasks
-  socket.on("deleteTask", function (index, todolistId) {
+  socket.on("deleteTask", function (item, todolistId) {
     // Supprime une tâche du tableau todolist du serveur
-    todolists[todolistId].splice(index, 1);
+    //todolists[todolistId].splice(index, 1);
+    console.log(`deleting item ${item} from ${todolistId}`)
+    for (var i = 0; i < todolists[todolistId].length; i++) { 
+      if (todolists[todolistId][i] === item) { 
+        console.log('item found, splicing')
+        todolists[todolistId].splice(i, 1); 
+      } 
+    }
     saveTask(todolists);
 
     //Mises à jour todolist de tous les utilisateurs en temps réel - rafraîchir l'index
+    socket.emit(`updateTask${todolistId}`, todolists[todolistId]);
     socket.broadcast.emit(`updateTask${todolistId}`, todolists[todolistId]);
   });
 });
