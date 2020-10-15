@@ -1,0 +1,2 @@
+## deploy descriptor for gcp google app engine
+runtime: nodejs
